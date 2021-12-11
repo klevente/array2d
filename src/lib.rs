@@ -813,6 +813,11 @@ impl<T> Array2D<T> {
         self.array.iter()
     }
 
+    /// Returns an [`Iterator`] of mutable elements in a row major order
+    pub fn elements_row_major_iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> {
+        self.array.iter_mut()
+    }
+
     /// Returns an [`Iterator`] over references to all elements in [column major
     /// order].
     ///

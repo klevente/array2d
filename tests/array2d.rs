@@ -291,6 +291,22 @@ fn test_elements_row_major_iter() -> Result<(), Error> {
 }
 
 #[test]
+fn test_elements_row_major_iter_mut() -> Result<(), Error> {
+    let row_major_expected = vec![2, 3, 4, 5, 6, 7];
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let mut array = Array2D::from_rows(&rows)?;
+    for element in array.elements_row_major_iter_mut() {
+        *element += 1;
+    }
+
+    for (index, element) in array.elements_row_major_iter().enumerate() {
+        assert_eq!(element, &row_major_expected[index]);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn test_elements_column_major_iter() -> Result<(), Error> {
     let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
     let column_major = vec![1, 4, 2, 5, 3, 6];
