@@ -1152,6 +1152,8 @@ impl<T> Array2D<T> {
     /// index is a tuple of [`usize`].
     ///
     /// # Examples
+    ///
+    /// ```
     /// # use array2d::{Array2D, Error};
     /// # fn main() -> Result<(), Error> {
     /// let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
@@ -1170,9 +1172,12 @@ impl<T> Array2D<T> {
     /// );
     /// # Ok(())
     /// # }
+    /// ```
     ///
     /// [`usize`]: https://doc.rust-lang.org/std/primitive.usize.html
-    pub fn enumerate_row_major(&self) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + Clone {
+    pub fn enumerate_row_major(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + Clone {
         self.indices_row_major().map(move |i| (i, &self[i]))
     }
 
@@ -1180,6 +1185,8 @@ impl<T> Array2D<T> {
     /// index is a tuple of [`usize`].
     ///
     /// # Examples
+    ///
+    /// ```
     /// # use array2d::{Array2D, Error};
     /// # fn main() -> Result<(), Error> {
     /// let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
@@ -1198,9 +1205,12 @@ impl<T> Array2D<T> {
     /// );
     /// # Ok(())
     /// # }
+    /// ```
     ///
     /// [`usize`]: https://doc.rust-lang.org/std/primitive.usize.html
-    pub fn enumerate_column_major(&self) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + Clone {
+    pub fn enumerate_column_major(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = ((usize, usize), &T)> + Clone {
         self.indices_column_major().map(move |i| (i, &self[i]))
     }
 
