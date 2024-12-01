@@ -26,7 +26,7 @@ fn test_from_row_major() -> Result<(), Error> {
     let row_major = vec![1, 2, 3, 4, 5, 6];
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::from_row_major(&row_major, num_rows, num_columns)?;
+    let array = Array2D::from_row_major(num_rows, num_columns, &row_major)?;
     for (row_index, row) in rows.iter().enumerate() {
         for (column_index, element) in row.iter().enumerate() {
             assert_eq!(array.get(row_index, column_index), Some(element));
@@ -41,7 +41,7 @@ fn test_from_column_major() -> Result<(), Error> {
     let column_major = vec![1, 4, 2, 5, 3, 6];
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::from_column_major(&column_major, num_rows, num_columns)?;
+    let array = Array2D::from_column_major(num_rows, num_columns, &column_major)?;
     for (row_index, row) in rows.iter().enumerate() {
         for (column_index, element) in row.iter().enumerate() {
             assert_eq!(array.get(row_index, column_index), Some(element));
@@ -53,7 +53,7 @@ fn test_from_column_major() -> Result<(), Error> {
 #[test]
 fn test_filled_with() -> Result<(), Error> {
     let element = 7;
-    let array = Array2D::filled_with(element, 4, 5);
+    let array = Array2D::filled_with(4, 5, element);
     assert_eq!(array.num_rows(), 4);
     assert_eq!(array.num_columns(), 5);
     assert_eq!(array.num_elements(), 20);
@@ -74,7 +74,7 @@ fn test_filled_by_row_major() -> Result<(), Error> {
         counter += 1;
         tmp
     };
-    let array = Array2D::filled_by_row_major(increment, 2, 3);
+    let array = Array2D::filled_by_row_major(2, 3, increment);
     assert_eq!(array.as_rows(), vec![vec![1, 2, 3], vec![4, 5, 6]]);
     Ok(())
 }
@@ -87,22 +87,124 @@ fn test_filled_by_column_major() -> Result<(), Error> {
         counter += 1;
         tmp
     };
-    let array = Array2D::filled_by_column_major(increment, 2, 3);
+    let array = Array2D::filled_by_column_major(2, 3, increment);
     assert_eq!(array.as_columns(), vec![vec![1, 2], vec![3, 4], vec![5, 6]]);
     Ok(())
 }
 
 #[test]
 fn test_from_iter_row_major() -> Result<(), Error> {
-    let array = Array2D::from_iter_row_major(1.., 2, 3)?;
+    let array = Array2D::from_iter_row_major(2, 3, 1..)?;
     assert_eq!(array.as_rows(), vec![vec![1, 2, 3], vec![4, 5, 6]]);
     Ok(())
 }
 
 #[test]
 fn test_from_iter_column_major() -> Result<(), Error> {
-    let array = Array2D::from_iter_column_major(1.., 2, 3)?;
+    let array = Array2D::from_iter_column_major(2, 3, 1..)?;
     assert_eq!(array.as_columns(), vec![vec![1, 2], vec![3, 4], vec![5, 6]]);
+    Ok(())
+}
+
+#[test]
+fn test_map_row_major() -> Result<(), Error> {
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let array = Array2D::from_rows(&rows)?;
+
+    let new_array = array.map_row_major(|x| x * 10);
+    let expected = vec![vec![10, 20, 30], vec![40, 50, 60]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let mut mutable_counter = 100;
+    let new_array = array.map_row_major(|_| {
+        mutable_counter += 1;
+        mutable_counter
+    });
+    let expected = vec![vec![101, 102, 103], vec![104, 105, 106]];
+    assert_eq!(expected, new_array.as_rows());
+
+    Ok(())
+}
+
+#[test]
+fn test_map_column_major() -> Result<(), Error> {
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let array = Array2D::from_rows(&rows)?;
+
+    let new_array = array.map_column_major(|x| x * 10);
+    let expected = vec![vec![10, 20, 30], vec![40, 50, 60]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let mut mutable_counter = 100;
+    let new_array = array.map_column_major(|_| {
+        mutable_counter += 1;
+        mutable_counter
+    });
+    let expected = vec![vec![101, 103, 105], vec![102, 104, 106]];
+    assert_eq!(expected, new_array.as_rows());
+
+    Ok(())
+}
+
+#[test]
+fn test_map_with_index_row_major() -> Result<(), Error> {
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let array = Array2D::from_rows(&rows)?;
+
+    let new_array = array.map_with_index_row_major(|_, x| x * 10);
+    let expected = vec![vec![10, 20, 30], vec![40, 50, 60]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let new_array = array.map_with_index_row_major(|i, _| i);
+    let expected = vec![vec![(0, 0), (0, 1), (0, 2)], vec![(1, 0), (1, 1), (1, 2)]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let new_array = array.map_with_index_row_major(|i, e| format!("{} {:?}", e, i));
+    let expected = vec![
+        vec!["1 (0, 0)", "2 (0, 1)", "3 (0, 2)"],
+        vec!["4 (1, 0)", "5 (1, 1)", "6 (1, 2)"],
+    ];
+    assert_eq!(expected, new_array.as_rows());
+
+    let mut mutable_counter = 100;
+    let new_array = array.map_with_index_row_major(|_, _| {
+        mutable_counter += 1;
+        mutable_counter
+    });
+    let expected = vec![vec![101, 102, 103], vec![104, 105, 106]];
+    assert_eq!(expected, new_array.as_rows());
+
+    Ok(())
+}
+
+#[test]
+fn test_map_with_index_column_major() -> Result<(), Error> {
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let array = Array2D::from_rows(&rows)?;
+
+    let new_array = array.map_with_index_column_major(|_, x| x * 10);
+    let expected = vec![vec![10, 20, 30], vec![40, 50, 60]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let new_array = array.map_with_index_column_major(|i, _| i);
+    let expected = vec![vec![(0, 0), (0, 1), (0, 2)], vec![(1, 0), (1, 1), (1, 2)]];
+    assert_eq!(expected, new_array.as_rows());
+
+    let new_array = array.map_with_index_column_major(|i, e| format!("{} {:?}", e, i));
+    let expected = vec![
+        vec!["1 (0, 0)", "2 (0, 1)", "3 (0, 2)"],
+        vec!["4 (1, 0)", "5 (1, 1)", "6 (1, 2)"],
+    ];
+    assert_eq!(expected, new_array.as_rows());
+
+    let mut mutable_counter = 100;
+    let new_array = array.map_with_index_column_major(|_, _| {
+        mutable_counter += 1;
+        mutable_counter
+    });
+    let expected = vec![vec![101, 103, 105], vec![102, 104, 106]];
+    assert_eq!(expected, new_array.as_rows());
+
     Ok(())
 }
 
@@ -401,6 +503,23 @@ fn test_op_index_mut() -> Result<(), Error> {
     Ok(())
 }
 
+#[test]
+fn test_swap() -> Result<(), Error> {
+    let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
+    let mut array = Array2D::from_rows(&rows)?;
+
+    assert!(array.swap((0, 1), (1, 0)).is_ok());
+    let expected_rows = vec![vec![1, 4, 3], vec![2, 5, 6]];
+    assert_eq!(array.as_rows(), expected_rows);
+
+    let expected_err = Error::IndicesOutOfBounds(2, 0);
+    assert_eq!(array.swap((0, 1), (2, 0)).unwrap_err(), expected_err);
+    // The failed swap should not have modified the array.
+    assert_eq!(array.as_rows(), expected_rows);
+
+    Ok(())
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Error Handling //////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -424,7 +543,7 @@ fn test_from_row_major_dimensions_do_not_match_size() {
     let row_major = vec![1, 2, 3, 4, 5, 6, 7];
     let num_rows = 2;
     let num_columns = 3;
-    let result = Array2D::from_row_major(&row_major, num_rows, num_columns);
+    let result = Array2D::from_row_major(num_rows, num_columns, &row_major);
     assert_eq!(result, Err(Error::DimensionMismatch));
 }
 
@@ -433,7 +552,7 @@ fn test_from_column_major_dimensions_do_not_match_size() {
     let column_major = vec![1, 4, 2, 5, 3];
     let num_rows = 2;
     let num_columns = 3;
-    let result = Array2D::from_column_major(&column_major, num_rows, num_columns);
+    let result = Array2D::from_column_major(num_rows, num_columns, &column_major);
     assert_eq!(result, Err(Error::DimensionMismatch));
 }
 
@@ -442,7 +561,7 @@ fn test_from_iter_row_major_not_enough() {
     let iter = 1..5;
     let num_rows = 2;
     let num_columns = 3;
-    let result = Array2D::from_iter_row_major(iter, num_rows, num_columns);
+    let result = Array2D::from_iter_row_major(num_rows, num_columns, iter);
     assert_eq!(result, Err(Error::NotEnoughElements));
 }
 
@@ -451,7 +570,7 @@ fn test_from_iter_column_major_not_enough() {
     let iter = 1..5;
     let num_rows = 2;
     let num_columns = 3;
-    let result = Array2D::from_iter_column_major(iter, num_rows, num_columns);
+    let result = Array2D::from_iter_column_major(num_rows, num_columns, iter);
     assert_eq!(result, Err(Error::NotEnoughElements));
 }
 
@@ -460,7 +579,7 @@ fn test_row_iter_out_of_bounds() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::filled_with(element, num_rows, num_columns);
+    let array = Array2D::filled_with(num_rows, num_columns, element);
     let result = array.row_iter(num_rows);
     assert!(result.is_err());
 }
@@ -470,7 +589,7 @@ fn test_column_iter_out_of_bounds() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::filled_with(element, num_rows, num_columns);
+    let array = Array2D::filled_with(num_rows, num_columns, element);
     let result = array.column_iter(num_columns);
     assert!(result.is_err());
 }
@@ -481,7 +600,7 @@ fn test_index_out_of_bounds_row() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::filled_with(element, num_rows, num_columns);
+    let array = Array2D::filled_with(num_rows, num_columns, element);
     let _ = array[(num_rows, 0)];
 }
 
@@ -491,7 +610,7 @@ fn test_index_out_of_bounds_column() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::filled_with(element, num_rows, num_columns);
+    let array = Array2D::filled_with(num_rows, num_columns, element);
     let _ = array[(0, num_columns)];
 }
 
@@ -501,7 +620,7 @@ fn test_index_out_of_bounds_row_and_column() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let array = Array2D::filled_with(element, num_rows, num_columns);
+    let array = Array2D::filled_with(num_rows, num_columns, element);
     let _ = array[(num_rows, num_columns)];
 }
 
@@ -511,7 +630,7 @@ fn test_index_mut_out_of_bounds_row() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let mut array = Array2D::filled_with(element, num_rows, num_columns);
+    let mut array = Array2D::filled_with(num_rows, num_columns, element);
     array[(num_rows, 0)] += 1;
 }
 
@@ -521,7 +640,7 @@ fn test_index_mut_out_of_bounds_column() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let mut array = Array2D::filled_with(element, num_rows, num_columns);
+    let mut array = Array2D::filled_with(num_rows, num_columns, element);
     array[(0, num_columns)] += 1;
 }
 
@@ -531,7 +650,7 @@ fn test_index_mut_out_of_bounds_row_and_column() {
     let element = 42;
     let num_rows = 2;
     let num_columns = 3;
-    let mut array = Array2D::filled_with(element, num_rows, num_columns);
+    let mut array = Array2D::filled_with(num_rows, num_columns, element);
     array[(num_rows, num_columns)] += 1;
 }
 
@@ -553,7 +672,7 @@ fn test_empty_array_from_rows() -> Result<(), Error> {
 #[test]
 fn test_empty_array_from_row_major() -> Result<(), Error> {
     let row_major: Vec<i32> = vec![];
-    let array = Array2D::from_row_major(&row_major, 0, 0)?;
+    let array = Array2D::from_row_major(0, 0, &row_major)?;
     assert_eq!(array.num_rows(), 0);
     assert_eq!(array.num_columns(), 0);
     assert_eq!(array.row_len(), 0);
@@ -575,7 +694,7 @@ fn test_empty_array_from_rows_many_empty_rows() -> Result<(), Error> {
 #[test]
 fn test_empty_array_from_row_major_non_zero_columns() -> Result<(), Error> {
     let row_major: Vec<i32> = vec![];
-    let array = Array2D::from_row_major(&row_major, 0, 4)?;
+    let array = Array2D::from_row_major(0, 4, &row_major)?;
     assert_eq!(array.num_rows(), 0);
     assert_eq!(array.num_columns(), 4);
     assert_eq!(array.row_len(), 4);
