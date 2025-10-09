@@ -755,8 +755,8 @@ impl<T> Array2D<T> {
     ///
     /// [`None`]: https://doc.rust-lang.org/std/option/enum.Option.html#variant.None
     pub fn get_column_major(&self, index: usize) -> Option<&T> {
-        let column = dbg!(dbg!(index) / self.num_rows);
-        let row = dbg!(index % self.num_rows);
+        let column = index / self.num_rows;
+        let row = index % self.num_rows;
         self.get(row, column)
     }
 
